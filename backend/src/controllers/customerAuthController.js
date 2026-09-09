@@ -1,13 +1,16 @@
 import Customer from "../models/Customer.js";
 import Otp from "../models/Otp.js";
 import { signToken } from "../utils/jwt.js";
+import twilio from "twilio";
 
 function generateOtpCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// In production, wire this to Twilio Verify (or an SMS provider) instead of
-// storing+logging the code. Kept provider-agnostic here since only test keys exist.
+const twilioClient = process.env.TWILIO_ACCOUNT_SID
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+
 export async function sendOtp(req, res) {
   try {
     const { phone } = req.body;
@@ -18,8 +21,15 @@ export async function sendOtp(req, res) {
 
     await Otp.create({ phone, code, expiresAt });
 
-    // TODO: send via SMS provider (Twilio Verify etc.) once keys are added.
-    console.log(`[DEV] OTP for ${phone}: ${code}`);
+    if (twilioClient) {
+      await twilioClient.messages.create({
+        body: `Your Pure Reach Connect OTP is ${code}. Valid for 5 minutes.`,
+        from: process.env.TWILIO_FROM_NUMBER,
+        to: phone,
+      });
+    } else {
+      console.log(`[DEV] OTP for ${phone}: ${code}`);
+    }
 
     return res.json({ message: "OTP sent" });
   } catch (err) {

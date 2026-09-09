@@ -19,6 +19,8 @@ const sellerSchema = new mongoose.Schema(
     // Branding
     logoUrl: { type: String },
     bannerUrl: { type: String },
+    bannerCreditsUsedThisYear: { type: Number, default: 0 },
+    bannerCreditsResetAt: { type: Date },
     brandColor: { type: String, default: "#B5651D" }, // per-seller accent, keeps stalls distinct
     description: { type: String, trim: true },
 
@@ -45,6 +47,7 @@ const sellerSchema = new mongoose.Schema(
 
     isVerified: { type: Boolean, default: false }, // admin verification
     isSuspended: { type: Boolean, default: false },
+    broadcastOptInCustomers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Customer" }], // Gold+ only
   },
   { timestamps: true }
 );

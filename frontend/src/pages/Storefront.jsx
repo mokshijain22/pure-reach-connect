@@ -38,17 +38,28 @@ export default function Storefront() {
             <h1 className="font-display text-2xl sm:text-3xl" style={{ color: "var(--ink)" }}>{seller.businessName}</h1>
             <p className="text-sm" style={{ color: "var(--ink-soft)" }}>{seller.city}{seller.state ? `, ${seller.state}` : ""}</p>
           </div>
-          {seller.whatsappNumber && (
-            <a
-              href={`https://wa.me/${seller.whatsappNumber}`}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto text-sm px-5 py-2.5 rounded-full font-medium"
-              style={{ background: "var(--success)", color: "#fff" }}
-            >
-              WhatsApp
-            </a>
-          )}
+                    <div className="ml-auto flex gap-2">
+            {seller.phone && (
+              <a
+                href={`tel:${seller.phone}`}
+                className="text-sm px-5 py-2.5 rounded-full font-medium border"
+                style={{ borderColor: "var(--border)", color: "var(--ink)" }}
+              >
+                Call
+              </a>
+            )}
+            {seller.whatsappNumber && (
+              <a
+                href={`https://wa.me/${seller.whatsappNumber}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm px-5 py-2.5 rounded-full font-medium"
+                style={{ background: "var(--success)", color: "#fff" }}
+              >
+                WhatsApp
+              </a>
+            )}
+          </div>
         </motion.div>
 
         {seller.description && <p className="mb-10 max-w-2xl" style={{ color: "var(--ink-soft)" }}>{seller.description}</p>}

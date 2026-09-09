@@ -21,5 +21,13 @@ function authFactory(expectedRole) {
 }
 
 export const requireSeller = authFactory("seller");
+
+// Attaches req.sellerPlan for plan-gated routes (analytics, broadcast, etc.)
+export async function attachSellerPlan(req, res, next) {
+  const Seller = (await import("../models/Seller.js")).default;
+  const seller = await Seller.findById(req.user.id).select("currentPlan");
+  req.sellerPlan = seller?.currentPlan || null;
+  next();
+}
 export const requireCustomer = authFactory("customer");
 export const requireAdmin = authFactory("admin");

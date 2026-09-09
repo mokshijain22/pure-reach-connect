@@ -5,10 +5,12 @@ import { useSellerAuth } from "../context/SellerAuthContext";
 import SellerProducts from "./seller/SellerProducts";
 import SellerOrders from "./seller/SellerOrders";
 import SellerSettings from "./seller/SellerSettings";
+import SellerAnalytics from "./seller/SellerAnalytics";
 
 const TABS = [
   { key: "products", label: "Products" },
   { key: "orders", label: "Orders" },
+  { key: "analytics", label: "Analytics" },
   { key: "settings", label: "Store settings" },
 ];
 
@@ -49,6 +51,7 @@ export default function SellerDashboard() {
       <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {tab === "products" && <SellerProducts />}
         {tab === "orders" && <SellerOrders />}
+        {tab === "analytics" && <SellerAnalytics />}
         {tab === "settings" && <SellerSettings />}
       </motion.div>
     </div>
