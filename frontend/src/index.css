@@ -29,6 +29,32 @@
   --border: #332C22;
 }
 
+/* Seller zone — dark cinematic control-room feel, regardless of light/dark toggle */
+[data-zone="seller"] {
+  --bg: #0B0D12;
+  --bg-elevated: #12151C;
+  --card: #171B24;
+  --ink: #F2F4F8;
+  --ink-soft: #8B93A3;
+  --accent: #6C8CFF;
+  --accent-soft: #4A63C9;
+  --success: #34C77B;
+  --border: #232838;
+}
+
+/* Admin zone — dark, minimal, no warmth */
+[data-zone="admin"] {
+  --bg: #0A0A0B;
+  --bg-elevated: #131315;
+  --card: #18181B;
+  --ink: #EDEDEF;
+  --ink-soft: #808088;
+  --accent: #E5484D;
+  --accent-soft: #B93A3E;
+  --success: #30A46C;
+  --border: #26262A;
+}
+
 body {
   background-color: var(--bg);
   color: var(--ink);
@@ -44,3 +70,38 @@ h1, h2, h3, .font-display {
   background: var(--accent-soft);
   color: #fff;
 }
+
+[data-zone="seller"], [data-zone="admin"] {
+  transition: background-color 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.6s ease both;
+}
+
+.glow-border {
+  position: relative;
+}
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--accent), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.glow-border:hover::before {
+  opacity: 1;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

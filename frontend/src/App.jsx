@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { SellerAuthProvider } from "./context/SellerAuthContext";
 import { CustomerAuthProvider } from "./context/CustomerAuthContext";
@@ -33,6 +33,22 @@ function CartBadge() {
   );
 }
 
+function getZone(pathname) {
+  if (pathname === "/admin") return "admin";
+  if (pathname.startsWith("/seller") || pathname.startsWith("/sell")) return "seller";
+  return "customer";
+}
+
+function ZoneRoot({ children }) {
+  const { pathname } = useLocation();
+  const zone = getZone(pathname);
+  return (
+    <div key={zone} data-zone={zone} className="min-h-screen animate-fade-up" style={{ background: "var(--bg)" }}>
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -40,7 +56,7 @@ export default function App() {
         <CustomerAuthProvider>
           <AdminAuthProvider>
             <CartProvider>
-              <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+              <ZoneRoot>
                 <Navbar />
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -58,7 +74,7 @@ export default function App() {
                   <Route path="/admin" element={<Admin />} />
                 </Routes>
                 <CartBadge />
-              </div>
+              </ZoneRoot>
             </CartProvider>
           </AdminAuthProvider>
         </CustomerAuthProvider>
