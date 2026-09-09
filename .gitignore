@@ -1,0 +1,15 @@
+node_modules/
+
+# Environment and local secret files
+.env
+.env.*
+
+# Build and coverage output
+dist/
+build/
+coverage/
+
+# Local tooling files
+.DS_Store
+Thumbs.db
+.vscode/
