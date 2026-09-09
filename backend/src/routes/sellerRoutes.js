@@ -7,6 +7,7 @@ import { sellerBrandingStorage, sellerVideoStorage } from "../config/cloudinary.
 import Seller from "../models/Seller.js";
 import { getPlan } from "../config/plans.js";
 import { getSellerAnalytics } from "../controllers/analyticsController.js";
+import { sendBroadcast } from "../controllers/broadcastController.js";
 
 const router = express.Router();
 const uploadBranding = multer({ storage: sellerBrandingStorage });
@@ -16,6 +17,7 @@ router.post("/register", registerSeller);
 router.post("/login", loginSeller);
 router.get("/me", requireSeller, getSellerProfile);
 router.get("/analytics", requireSeller, attachSellerPlan, getSellerAnalytics);
+router.post("/broadcast", requireSeller, sendBroadcast);
 
 // Subscription
 router.post("/subscription/create-order", requireSeller, createSubscriptionOrder);
