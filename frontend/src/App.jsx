@@ -17,6 +17,8 @@ import SellerLogin from "./pages/SellerLogin";
 import SellerPlanSelect from "./pages/SellerPlanSelect";
 import SellerDashboard from "./pages/SellerDashboard";
 import Admin from "./pages/Admin";
+import CustomerLogin from "./pages/CustomerLogin";
+import CustomerAccount from "./pages/CustomerAccount";
 
 function CartBadge() {
   const { items } = useCart();
@@ -65,6 +67,8 @@ export default function App() {
                   <Route path="/product/:id" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/login" element={<CustomerLogin />} />
+                  <Route path="/account" element={<CustomerAccount />} />
 
                   <Route path="/sell" element={<SellerRegister />} />
                   <Route path="/sell/plans" element={<SellerPlanSelect />} />

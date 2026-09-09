@@ -49,7 +49,6 @@ export default function Home() {
   const featuresRef = useRef(null);
   const blob1Ref = useRef(null);
   const blob2Ref = useRef(null);
-  const ringRef = useRef(null);
   const shutterRef = useRef(null);
   const doorLeftRef = useRef(null);
   const doorRightRef = useRef(null);
@@ -61,35 +60,50 @@ export default function Home() {
       // Ambient drift for the background shapes — independent of scroll
       gsap.to(blob1Ref.current, { x: 40, y: -30, duration: 9, repeat: -1, yoyo: true, ease: "sine.inOut" });
       gsap.to(blob2Ref.current, { x: -35, y: 25, duration: 11, repeat: -1, yoyo: true, ease: "sine.inOut" });
-      gsap.to(ringRef.current, { rotate: 360, duration: 30, repeat: -1, ease: "none" });
 
-      // Starting state: shutter fully covers the screen from frame one (visible on load,
-      // no scroll needed), doors closed beneath it, text hidden.
-      gsap.set(shutterRef.current, { yPercent: 0 });
-      gsap.set([doorLeftRef.current, doorRightRef.current], { rotateY: 0 });
-      gsap.set(textGroupRef.current, { opacity: 0, y: 20 });
+      // Starting state: shutter fully covers the screen, doors shut beneath it
+      // (clip-path, not rotateY — no 3D flicker). Text hidden.
+      // Only ONE of [shutter / doors / text] is ever visible at a time — each
+      // layer is fully hidden (autoAlpha: 0) the instant its moment is over.
+      gsap.set(shutterRef.current, { yPercent: 0, autoAlpha: 1, force3D: true });
+      gsap.set([doorLeftRef.current, doorRightRef.current], { autoAlpha: 1, scaleX: 1, force3D: true });
+      gsap.set(doorLeftRef.current, { transformOrigin: "left center" });
+      gsap.set(doorRightRef.current, { transformOrigin: "right center" });
+      gsap.set(textGroupRef.current, { autoAlpha: 0, y: 20, scale: 0.96 });
 
-      // One master timeline, pinned to the single intro section — fully sequential.
+      // One master timeline, PINNED to the intro section — STRICTLY sequential,
+      // no step starts until the previous one has completely finished.
       const introTl = gsap.timeline({
         scrollTrigger: {
           trigger: introRef.current,
           start: "top top",
-          end: "bottom bottom",
-          scrub: true,
+          end: "+=350%",
+          scrub: 0.3,
+          pin: true,
+          pinType: "transform",
+          anticipatePin: 1,
         },
       });
       introTl
-        // 1. Hold the shutter fully closed for a moment before it starts rising
-        .to(shutterRef.current, { yPercent: 0, duration: 0.4 })
-        // 2. Shutter rises and clears the screen — longer duration, as requested
-        .to(shutterRef.current, { yPercent: -100, duration: 2.2, ease: "power2.inOut" })
-        // 3. Doors swing open, revealing the warm glow
-        .to(doorLeftRef.current, { rotateY: -110, duration: 1.2, ease: "power2.inOut" }, "+=0.1")
-        .to(doorRightRef.current, { rotateY: 110, duration: 1.2, ease: "power2.inOut" }, "<")
-        // 4. Wordmark + tagline fade in together, in the same centered spot
-        .to(textGroupRef.current, { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, "+=0.1")
-        // 5. Slight forward push, hands off to the next section
-        .to(introRef.current, { scale: 1.05, duration: 0.8, ease: "power1.in" });
+        // 1. Hold the shutter fully closed for a moment
+        .to(shutterRef.current, { yPercent: 0, duration: 0.5 })
+        // 2. Shutter rises fully off screen — linear ease so it tracks scroll
+        // 1:1 and stays clearly visible as you scroll, instead of front-loading/
+        // back-loading the motion the way power2.inOut does under scrub.
+        .to(shutterRef.current, { yPercent: -100, duration: 3, ease: "none" })
+        // 2b. Shutter's job is done — hide it completely so it can never overlap the doors
+        .set(shutterRef.current, { autoAlpha: 0 })
+        // 3. ONLY NOW do the gate doors open — no overlap with the shutter
+        .to(doorLeftRef.current, { scaleX: 0, duration: 1.8, ease: "none" })
+        .to(doorRightRef.current, { scaleX: 0, duration: 1.8, ease: "none" }, "<")
+        // 3b. Doors are fully open — hide the gate layer completely
+        .set([doorLeftRef.current, doorRightRef.current], { autoAlpha: 0 })
+        // 4. ONLY NOW does the wordmark + tagline fade in, alone on screen
+        .to(textGroupRef.current, { autoAlpha: 1, y: 0, scale: 1, duration: 1.1, ease: "power2.out" })
+        // 5. Brief hold so the reveal is readable before handing off
+        .to({}, { duration: 0.6 });
+
+      ScrollTrigger.refresh();
 
       // Each feature row: image slides in from its side, text fades up
       gsap.utils.toArray(".feature-row").forEach((row, i) => {
@@ -99,11 +113,11 @@ export default function Home() {
 
         gsap.fromTo(img, { opacity: 0, x: fromX, scale: 0.95 }, {
           opacity: 1, x: 0, scale: 1, duration: 0.9, ease: "power3.out",
-          scrollTrigger: { trigger: row, start: "top 75%" },
+          scrollTrigger: { trigger: row, start: "top 85%" },
         });
         gsap.fromTo(text, { opacity: 0, y: 30 }, {
           opacity: 1, y: 0, duration: 0.7, ease: "power3.out", delay: 0.15,
-          scrollTrigger: { trigger: row, start: "top 75%" },
+          scrollTrigger: { trigger: row, start: "top 85%" },
         });
       });
     });
@@ -116,10 +130,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="overflow-hidden">
+    <div>
             {/* One continuous pinned scene: shutter covers screen on load → shutter rises →
           doors swing open → wordmark + tagline fade in together, same spot */}
-      <section ref={introRef} className="h-[260vh] relative overflow-hidden">
+      <section ref={introRef} className="h-screen relative overflow-hidden">
         {/* dot-grid texture */}
         <div
           className="absolute inset-0 opacity-[0.35]"
@@ -130,18 +144,21 @@ export default function Home() {
         />
 
         {/* drifting accent shapes */}
-        <div ref={blob1Ref} className="opener-blob pointer-events-none absolute top-[15%] left-[8%] w-72 h-72 rounded-full blur-3xl opacity-25" style={{ background: "var(--accent)" }} />
-        <div ref={blob2Ref} className="opener-blob pointer-events-none absolute bottom-[15%] right-[10%] w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "var(--success)" }} />
-        <div ref={ringRef} className="opener-ring pointer-events-none absolute top-[20%] right-[15%] w-40 h-40 rounded-full border-2 opacity-30" style={{ borderColor: "var(--accent)" }} />
+        <div ref={blob1Ref} className="opener-blob pointer-events-none absolute top-[15%] left-[8%] w-72 h-72 rounded-full blur-3xl opacity-25" style={{ background: "#8b7cf6" }} />
+        <div ref={blob2Ref} className="opener-blob pointer-events-none absolute bottom-[15%] right-[10%] w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "#c4b5fd" }} />
         <div className="pointer-events-none absolute bottom-[25%] left-[15%] w-3 h-3 rounded-full opacity-40" style={{ background: "var(--accent)" }} />
         <div className="pointer-events-none absolute top-[35%] left-[25%] w-2 h-2 rounded-full opacity-30" style={{ background: "var(--ink)" }} />
 
         <div className="sticky top-0 h-screen flex items-center justify-center px-5 text-center">
           {/* text layer — wordmark + tagline together, same centered spot, hidden until doors open */}
-          <div className="relative z-30 flex flex-col items-center gap-4 opacity-0" ref={textGroupRef}>
-            <h1 className="font-display text-6xl sm:text-8xl" style={{ color: "var(--ink)" }}>
+          <div className="relative z-30 flex flex-col items-center gap-5" ref={textGroupRef}>
+            <h1
+              className="font-display text-6xl sm:text-8xl italic"
+              style={{ color: "var(--ink)", letterSpacing: "-0.02em", fontWeight: 500 }}
+            >
               Pure Reach Connect
             </h1>
+            <div className="h-px w-24" style={{ background: "var(--accent)" }} />
             <p className="font-display text-2xl sm:text-4xl leading-tight max-w-2xl" style={{ color: "var(--ink)" }}>
               Every stall deserves <span style={{ color: "var(--accent)" }}>its own front door.</span>
             </p>
@@ -150,23 +167,31 @@ export default function Home() {
           {/* shutter — covers the whole screen from the very first frame */}
           <div
             ref={shutterRef}
-            className="absolute inset-0 z-20"
+            className="absolute inset-0 z-20 flex items-center justify-center"
             style={{
               background: "repeating-linear-gradient(180deg, var(--bg-elevated) 0px, var(--bg-elevated) 18px, var(--card) 18px, var(--card) 20px)",
             }}
-          />
+          >
+            {/* text/logo on the shutter itself — change this to whatever you want printed on it */}
+            <span
+              className="font-display text-2xl sm:text-3xl tracking-wide uppercase"
+              style={{ color: "var(--ink-soft)", letterSpacing: "0.15em" }}
+            >
+              Opening Soon
+            </span>
+          </div>
 
           {/* door frame — sits beneath the shutter, revealed once shutter rises off */}
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="relative w-[70vw] max-w-2xl aspect-[3/4]" style={{ perspective: "1200px" }}>
+            <div className="relative w-[70vw] max-w-2xl aspect-[3/4]">
               <div
                 ref={doorLeftRef}
-                className="absolute top-0 left-0 w-1/2 h-full origin-left"
+                className="absolute top-0 left-0 w-1/2 h-full"
                 style={{ background: "var(--card)", borderRight: "1px solid var(--border)" }}
               />
               <div
                 ref={doorRightRef}
-                className="absolute top-0 right-0 w-1/2 h-full origin-right"
+                className="absolute top-0 right-0 w-1/2 h-full"
                 style={{ background: "var(--card)", borderLeft: "1px solid var(--border)" }}
               />
               <div

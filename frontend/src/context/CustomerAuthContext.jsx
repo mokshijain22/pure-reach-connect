@@ -29,6 +29,7 @@ export function CustomerAuthProvider({ children }) {
   function logoutCustomer() {
     localStorage.removeItem("prc-customer-token");
     localStorage.removeItem("prc-token");
+    localStorage.removeItem("prc-cart");
     setCustomer(null);
   }
 

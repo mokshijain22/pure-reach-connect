@@ -42,19 +42,35 @@ function AdminLogin({ onLogin }) {
 function AdminPanel({ onLogout }) {
   const [summary, setSummary] = useState(null);
   const [sellers, setSellers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  function load() {
-    api.get("/admin/dashboard").then((res) => setSummary(res.data));
-    api.get("/admin/sellers").then((res) => setSellers(res.data));
+  async function load() {
+    setLoading(true);
+    setError("");
+    const token = localStorage.getItem("prc-admin-token");
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    try {
+      const [summaryRes, sellersRes] = await Promise.all([
+        api.get("/admin/dashboard", config),
+        api.get("/admin/sellers", config),
+      ]);
+      setSummary(summaryRes.data);
+      setSellers(sellersRes.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to load the admin dashboard.");
+    } finally {
+      setLoading(false);
+    }
   }
-  useEffect(load, []);
+  useEffect(() => { load(); }, []);
 
   async function verify(id) {
-    await api.patch(`/admin/sellers/${id}/verify`);
+    await api.patch(`/admin/sellers/${id}/verify`, null, { headers: { Authorization: `Bearer ${localStorage.getItem("prc-admin-token")}` } });
     load();
   }
   async function toggleSuspend(seller) {
-    await api.patch(`/admin/sellers/${seller._id}/suspend`, { suspend: !seller.isSuspended });
+    await api.patch(`/admin/sellers/${seller._id}/suspend`, { suspend: !seller.isSuspended }, { headers: { Authorization: `Bearer ${localStorage.getItem("prc-admin-token")}` } });
     load();
   }
 
@@ -64,6 +80,9 @@ function AdminPanel({ onLogout }) {
         <h1 className="font-display text-3xl" style={{ color: "var(--ink)" }}>Admin</h1>
         <button onClick={onLogout} className="text-sm" style={{ color: "var(--ink-soft)" }}>Log out</button>
       </div>
+
+      {loading && <p style={{ color: "var(--ink-soft)" }}>Loading dashboard...</p>}
+      {error && <p className="text-sm mb-6" style={{ color: "#B54040" }}>{error}</p>}
 
       {summary && (
         <div className="grid sm:grid-cols-4 gap-4 mb-12">

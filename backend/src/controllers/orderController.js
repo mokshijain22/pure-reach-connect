@@ -36,14 +36,24 @@ export async function placeOrder(req, res) {
       shippingAddress,
     });
 
-    const { upiUrl, qrDataUrl } = await generateUpiQr({
-      upiId: seller.upiId,
-      payeeName: seller.businessName,
-      amount: totalAmount,
-      note: `Order ${order._id}`,
-    });
+    // The order itself should always succeed once items/address are valid —
+    // a seller who hasn't set up their UPI ID yet shouldn't block the customer's
+    // order from being placed. Just skip the QR and let them know payment
+    // details aren't ready yet.
+    let payment = null;
+    try {
+      const { upiUrl, qrDataUrl } = await generateUpiQr({
+        upiId: seller.upiId,
+        payeeName: seller.businessName,
+        amount: totalAmount,
+        note: `Order ${order._id}`,
+      });
+      payment = { upiUrl, qrDataUrl };
+    } catch (qrErr) {
+      console.warn(`UPI QR skipped for order ${order._id}: ${qrErr.message}`);
+    }
 
-    return res.status(201).json({ order, payment: { upiUrl, qrDataUrl } });
+    return res.status(201).json({ order, payment });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Could not place order", error: err.message });

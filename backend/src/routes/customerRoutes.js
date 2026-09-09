@@ -30,4 +30,26 @@ router.post("/addresses", requireCustomer, async (req, res) => {
 router.post("/orders", requireCustomer, placeOrder);
 router.get("/orders", requireCustomer, getCustomerOrders);
 
+// Wishlist
+router.get("/wishlist", requireCustomer, async (req, res) => {
+  const customer = await Customer.findById(req.user.id).populate("wishlist");
+  res.json(customer.wishlist);
+});
+
+router.post("/wishlist/:productId", requireCustomer, async (req, res) => {
+  const customer = await Customer.findById(req.user.id);
+  if (!customer.wishlist.some((id) => id.toString() === req.params.productId)) {
+    customer.wishlist.push(req.params.productId);
+    await customer.save();
+  }
+  res.json({ wishlist: customer.wishlist });
+});
+
+router.delete("/wishlist/:productId", requireCustomer, async (req, res) => {
+  const customer = await Customer.findById(req.user.id);
+  customer.wishlist = customer.wishlist.filter((id) => id.toString() !== req.params.productId);
+  await customer.save();
+  res.json({ wishlist: customer.wishlist });
+});
+
 export default router;

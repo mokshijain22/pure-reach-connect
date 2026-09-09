@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { useTheme } from "../context/ThemeContext";
+import { useCustomerAuth } from "../context/CustomerAuthContext";
+import { useCart } from "../context/CartContext";
 
 function getZone(pathname) {
   if (pathname === "/admin") return "admin";
@@ -10,17 +12,23 @@ function getZone(pathname) {
   return "customer";
 }
 
+function customerLinks(customer) {
+  const role = localStorage.getItem("prc-role");
+  const links = [{ to: "/", label: "Home" }, { to: "/marketplace", label: "Marketplace" }];
+  // Only show seller entry points to someone who hasn't chosen a role yet at all
+  if (!role) {
+    links.push({ to: "/sell", label: "Sell with us" }, { to: "/seller/login", label: "Seller login" });
+  }
+  links.push(customer ? { to: "/account", label: "My Account" } : { to: "/login", label: "Login" });
+  return links;
+}
+
 const ZONE_LINKS = {
-  customer: [
-    { to: "/marketplace", label: "Marketplace" },
-    { to: "/sell", label: "Sell with us" },
-    { to: "/seller/login", label: "Seller login" },
-  ],
   seller: [
     { to: "/seller/dashboard", label: "Dashboard" },
-    { to: "/", label: "View marketplace" },
+    { to: "/marketplace", label: "View marketplace" },
   ],
-  admin: [{ to: "/", label: "Exit admin" }],
+  admin: [{ to: "/marketplace", label: "Exit admin" }],
 };
 
 const ZONE_LABEL = { customer: "Marketplace", seller: "Seller Console", admin: "Admin" };
@@ -30,8 +38,23 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const zone = getZone(pathname);
-  const links = ZONE_LINKS[zone];
+  const { customer } = useCustomerAuth();
+  const { clearCart } = useCart();
+  const links = zone === "customer" ? customerLinks(customer) : ZONE_LINKS[zone];
+
+  function handleSwitchMode() {
+    if (zone === "seller") {
+      clearCart();
+      localStorage.setItem("prc-role", "customer");
+      navigate("/marketplace", { replace: true });
+      return;
+    }
+
+    localStorage.setItem("prc-role", "seller");
+    navigate("/seller/login", { replace: true });
+  }
 
   useEffect(() => {
     gsap.fromTo(navRef.current, { y: -24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" });
@@ -45,7 +68,11 @@ export default function Navbar() {
     >
       <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/" className="font-display text-xl tracking-tight" style={{ color: "var(--ink)" }}>
+          <Link
+            to={zone === "seller" ? "/seller/dashboard" : zone === "admin" ? "/admin" : "/"}
+            className="font-display text-xl tracking-tight"
+            style={{ color: "var(--ink)" }}
+          >
             Pure Reach Connect
           </Link>
           {zone !== "customer" && (
@@ -69,6 +96,15 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          {(zone === "customer" || zone === "seller") && localStorage.getItem("prc-role") && (
+            <button
+              onClick={handleSwitchMode}
+              className="text-xs px-3 py-1.5 rounded-full border"
+              style={{ color: "var(--ink-soft)", borderColor: "var(--border)" }}
+            >
+              Switch mode
+            </button>
+          )}
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"

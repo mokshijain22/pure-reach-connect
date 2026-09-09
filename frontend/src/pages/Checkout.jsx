@@ -16,6 +16,7 @@ export default function Checkout() {
   const [address, setAddress] = useState({ line1: "", city: "", state: "", pincode: "" });
   const [error, setError] = useState("");
   const [payment, setPayment] = useState(null);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function sendOtp(e) {
@@ -53,6 +54,7 @@ export default function Checkout() {
         shippingAddress: address,
       });
       setPayment(res.data.payment);
+      setOrderPlaced(true);
       clearCart();
     } catch (err) {
       setError(err.response?.data?.message || "Could not place order");
@@ -61,14 +63,23 @@ export default function Checkout() {
     }
   }
 
-  if (payment) {
+  if (orderPlaced) {
     return (
       <div className="max-w-md mx-auto px-5 sm:px-8 py-16 text-center">
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
           <h1 className="font-display text-2xl mb-3" style={{ color: "var(--ink)" }}>Order placed!</h1>
-          <p className="mb-6" style={{ color: "var(--ink-soft)" }}>Scan to pay the seller directly via UPI.</p>
-          <img src={payment.qrDataUrl} alt="UPI QR code" className="mx-auto rounded-xl border mb-6" style={{ borderColor: "var(--border)" }} />
-          <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Once paid, the seller will confirm and prepare your order.</p>
+          {payment ? (
+            <>
+              <p className="mb-6" style={{ color: "var(--ink-soft)" }}>Scan to pay the seller directly via UPI.</p>
+              <img src={payment.qrDataUrl} alt="UPI QR code" className="mx-auto rounded-xl border mb-6" style={{ borderColor: "var(--border)" }} />
+              <p className="text-sm" style={{ color: "var(--ink-soft)" }}>Once paid, the seller will confirm and prepare your order.</p>
+            </>
+          ) : (
+            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
+              This seller hasn't set up UPI payment details yet — check your order status in{" "}
+              <a href="/account" style={{ color: "var(--accent)" }}>My Account</a> and the seller will follow up on payment.
+            </p>
+          )}
         </motion.div>
       </div>
     );
